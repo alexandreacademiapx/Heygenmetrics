@@ -50,7 +50,8 @@ header{height:64px;position:sticky;top:0;z-index:50;background:rgba(245,245,247,
   --stage-blue:#2f8cff;--stage-violet:#8d5cff;--stage-radius:28px;
   --stage-ease:cubic-bezier(.23,1,.32,1);--stage-ease-io:cubic-bezier(.77,0,.175,1)
 }
-html{scroll-snap-type:y proximity;background:var(--stage-bg)}
+/* A rolagem continua nativa: os capítulos acompanham o movimento, sem capturar a roda do mouse. */
+html{scroll-snap-type:none;scroll-behavior:auto;background:var(--stage-bg)}
 body.presentation-preview{background:var(--stage-bg);color:var(--stage-ink);overflow-x:clip}
 .presentation-preview::before{content:"";position:fixed;inset:-25vmax;z-index:-1;pointer-events:none;background:radial-gradient(circle at var(--spot-x,75%) var(--spot-y,20%),rgba(47,140,255,.18),transparent 23%),radial-gradient(circle at 18% 72%,rgba(141,92,255,.12),transparent 28%);filter:blur(30px)}
 .presentation-preview header{background:rgba(7,9,15,.72);border-color:var(--stage-line);backdrop-filter:blur(20px) saturate(140%)}
@@ -69,10 +70,13 @@ body.presentation-preview{background:var(--stage-bg);color:var(--stage-ink);over
 .presentation-preview .hero-panel{border-color:rgba(255,255,255,.5);box-shadow:0 28px 90px rgba(0,0,0,.38)}
 .presentation-preview .hero-gallery::before{color:rgba(255,255,255,.045)}
 .presentation-preview .hero-live-control{color:var(--stage-ink);border-color:var(--stage-line);background:rgba(255,255,255,.06)}
-.presentation-preview .takeaways{background:#f6f7fb;color:#0a0b10;min-height:80svh;display:grid;align-items:center;scroll-snap-align:start}
-.presentation-preview .takeaways .wrap{width:100%}
-.presentation-preview .takeaways article{border-color:rgba(10,11,16,.12)}
-.presentation-preview .section,.presentation-preview .decision,.presentation-preview .methods{position:relative;scroll-snap-align:start}
+.presentation-preview .takeaway{background:#f6f7fb;color:#0a0b10;min-height:80svh;display:grid;align-items:center}
+.presentation-preview .takeaway .wrap{width:100%}
+.presentation-preview .takeaway strong{display:block;color:#10121a}
+.presentation-preview .takeaway p{color:rgba(16,18,26,.72)}
+.presentation-preview .takeaway .status{color:#137b59}
+.presentation-preview .takeaway .minor{border-color:rgba(10,11,16,.12)}
+.presentation-preview .section,.presentation-preview .decision,.presentation-preview .methods{position:relative}
 .presentation-preview .section{min-height:100svh;padding-block:clamp(88px,11vw,170px);background:transparent}
 .presentation-preview .section::before,.presentation-preview .decision::before{position:absolute;top:92px;left:max(24px,calc((100vw - 1240px)/2));font-size:12px;letter-spacing:.16em;text-transform:uppercase;color:#a99aff;font-weight:700}
 .presentation-preview #gestos::before{content:"Capítulo 01 · Presença"}
@@ -122,6 +126,18 @@ body.presentation-preview{background:var(--stage-bg);color:var(--stage-ink);over
 .presentation-preview .metric-number span{font-size:clamp(1.25rem,1.7vw,1.65rem);color:#9cc9ff}
 .presentation-preview .metric-sub{font-size:clamp(1rem,1.18vw,1.12rem);line-height:1.45;color:rgba(247,248,251,.82);max-width:38ch}
 .presentation-preview .metric-foot{font-size:.9rem;line-height:1.5;color:rgba(247,248,251,.72);margin-top:26px;max-width:52ch}
+.presentation-preview .hero{min-height:112svh}
+.presentation-preview .hero>.wrap{min-height:calc(100svh - 64px)}
+.presentation-preview .takeaway{min-height:72svh;padding-block:clamp(56px,8vw,96px)}
+.presentation-preview .takeaway .wrap{width:min(1240px,calc(100% - 64px))}
+.presentation-preview .takeaway-inner,.presentation-preview .takeaway-inner>div{opacity:1!important;filter:none!important;transform:none!important}
+.presentation-preview .takeaway strong{color:#11131b!important}
+.presentation-preview .takeaway p{color:rgba(17,19,27,.76)!important}
+.presentation-preview .takeaway .minor{border-color:rgba(17,19,27,.18)!important}
+/* O palco acompanha a rolagem nativa: sem parallax contínuo, sem filtros caros durante a apresentação. */
+.presentation-preview::before{filter:none;opacity:.72}
+.presentation-preview .story-rail,.presentation-preview .metric-card,.presentation-preview .spec-strip,.presentation-preview .compare-table-wrap,.presentation-preview .player-card,.presentation-preview .asr-proof,.presentation-preview .timing-board,.presentation-preview .phrase-detail,.presentation-preview details{backdrop-filter:none}
+.presentation-preview.presentation-ready .present-reveal{transform:translateY(20px);filter:none;transition:opacity 420ms var(--stage-ease),transform 520ms var(--stage-ease)}
 .presentation-preview .bar-line{grid-template-columns:34px 1fr 78px;gap:14px;margin:20px 0;font-size:.96rem;color:var(--stage-ink)}
 .presentation-preview .bar-line strong{font-size:1rem;color:var(--stage-ink)}
 .presentation-preview .bar-track{height:30px;background:rgba(255,255,255,.13)}
@@ -186,7 +202,7 @@ const scenes=[{name:'Abertura',title:'Braços mais abertos.',description:'O V ab
 function setScene(i){scene=i;const d=scenes[i];$('#step-count').textContent=`Momento ${i+1} de 3 · ${d.name}`;$('#scene-title').textContent=d.title;$('#scene-description').textContent=d.description;$('#time-III').textContent=d.iii;$('#time-V').textContent=d.v;$$('[data-frame]').forEach(el=>{el.classList.toggle('active',+el.dataset.frame===i);el.setAttribute('aria-hidden',String(+el.dataset.frame!==i))});$$('[data-scene]').forEach(el=>el.setAttribute('aria-pressed',String(+el.dataset.scene===i)));}
 function setMotion(){const off=reduce.matches||userReduce;root.classList.toggle('motion-enabled',!off);root.classList.toggle('motion-off',off);$('#motion-toggle').setAttribute('aria-pressed',String(off));$('#motion-toggle').textContent=reduce.matches?'Movimento reduzido pelo sistema':off?'Ativar animações':'Reduzir animações';$('#motion-toggle').disabled=reduce.matches;$('#story-hint').textContent=desktop.matches&&!off?'Role para percorrer os momentos ou use os botões.':'Use os botões 1, 2 e 3 para comparar os momentos.';if(off){$$('.hero-panel').forEach(e=>e.style.transform='');$$('.bar-fill').forEach(e=>e.getAnimations().forEach(a=>a.finish()));}schedule();}
 function update(){raf=0;const h=innerHeight,y=scrollY,max=document.documentElement.scrollHeight-h;$('.reading-progress').style.transform=`scaleX(${max?y/max:0})`;const off=reduce.matches||userReduce;const moving=Math.abs(y-oldScroll)>2;oldScroll=y;
-if(!off){const r=$('.hero').getBoundingClientRect(),p=Math.max(0,Math.min(1,-r.top/Math.max(1,r.height*.75)));$$('.hero-panel').forEach((e,i)=>e.style.transform=`translateY(${(i?0:24)*(1-p)}px) rotateY(${(i?-9:9)*(1-p)}deg) rotateZ(${(i?5:-5)*(1-p)}deg) scale(${1+p*.06})`);}
+if(!off){/* A abertura anima uma única vez; durante a rolagem, não recalculamos os painéis. */}
 const rail=$('.story-rail'),rect=rail.getBoundingClientRect();if(!off&&desktop.matches){const p=Math.max(0,Math.min(1,(100-rect.top)/(rail.offsetHeight-$('.story-stage').offsetHeight)));$('.scene-rule i').style.transform=`scaleX(${Math.max(.04,p)})`;if(moving&&performance.now()>manualUntil){const n=Math.min(2,Math.floor(p*3));if(n!==scene)setScene(n);}}else $('.scene-rule i').style.transform=`scaleX(${(scene+1)/3})`;
 let active='';['gestos','dados','reproduzir','decisao'].forEach(id=>{if(document.getElementById(id).getBoundingClientRect().top<innerHeight*.4)active=id});$$('nav a').forEach(a=>a.setAttribute('aria-current',String(a.hash==='#'+active)));}
 function schedule(){if(!raf)raf=requestAnimationFrame(update)}
@@ -227,9 +243,7 @@ addEventListener('visibilitychange',syncHero);
 // Opening choreography is finite; scroll adds depth to the evidence and closing statement.
 animate($('.hero h1'),[{opacity:0,transform:'translateY(24px) scale(.96)',filter:'blur(5px)'},{opacity:1,transform:'none',filter:'blur(0)'}],{duration:1000});
 $$('.hero-panel').forEach((el,i)=>animate(el,[{opacity:0,translate:`${i?80:-80}px 40px`,scale:'.9'},{opacity:1,translate:'0 0',scale:'1'}],{duration:1050,delay:130+i*100}));
-function onScroll(){motionFrame=0;if(reduce())return;const hero=$('.hero'),hr=hero.getBoundingClientRect();if(hr.bottom>0){const p=Math.max(0,Math.min(1,-hr.top/hr.height));gallery.style.setProperty('--drift',`${p*70}px`);$('.hero h1').style.transform=`translateY(${p*35}px) scale(${1-p*.05})`;}
-if(roomy.matches&&!coarse.matches){const s=$('.story-stage'),r=s.getBoundingClientRect();if(r.top<innerHeight&&r.bottom>0){const p=Math.max(0,Math.min(1,(innerHeight-r.top)/(innerHeight*.85)));$$('.frame').forEach((f,i)=>f.style.transform=`rotateY(${(i?1:-1)*(1-p)*11}deg) translateY(${(1-p)*35}px)`);}}
-const d=$('.decision h2'),dr=d.getBoundingClientRect();if(dr.top<innerHeight&&dr.bottom>0&&roomy.matches){const p=Math.max(0,Math.min(1,(innerHeight-dr.top)/(innerHeight*.75)));d.style.transform=`translateX(${(1-p)*-30}px)`;}}
+function onScroll(){motionFrame=0;}
 function scheduleMotion(){if(!motionFrame)motionFrame=requestAnimationFrame(onScroll)}
 addEventListener('scroll',scheduleMotion,{passive:true});addEventListener('resize',scheduleMotion,{passive:true});
 new MutationObserver(()=>{syncHero();if(reduce()){document.getAnimations().forEach(a=>a.cancel());$$('.hero h1,.hero-panel,.metric,.frame,.decision h2').forEach(e=>{e.style.transform='';e.style.translate='';});}scheduleMotion();}).observe(root,{attributes:true,attributeFilter:['class']});
@@ -284,8 +298,6 @@ revealTargets.forEach(el=>revealObserver.observe(el));
 const buttons=[...hud.querySelectorAll('button')];
 const chapterObserver=new IntersectionObserver(entries=>entries.forEach(entry=>{if(entry.isIntersecting){const i=chapters.findIndex(([id])=>id===entry.target.id);buttons.forEach((b,n)=>b.setAttribute('aria-current',String(n===i)));cue.querySelector('span').textContent=`${String(i+1).padStart(2,'0')} · ${chapters[i][1]}`}}),{threshold:.34});
 chapters.forEach(([id])=>{const el=document.getElementById(id);if(el)chapterObserver.observe(el)});
-let raf=0;
-addEventListener('scroll',()=>{if(raf||reduced.matches||body.classList.contains('motion-off'))return;raf=requestAnimationFrame(()=>{raf=0;const progress=scrollY/Math.max(1,document.documentElement.scrollHeight-innerHeight);document.documentElement.style.setProperty('--spot-x',`${70-45*progress}%`);document.documentElement.style.setProperty('--spot-y',`${16+68*progress}%`);const active=document.querySelector('.present-reveal.is-visible');if(active){const r=active.getBoundingClientRect(),p=Math.max(-1,Math.min(1,(r.top+r.height/2-innerHeight/2)/innerHeight));active.style.setProperty('transform',`translateY(${p*-8}px)`);}})},{passive:true});
-addEventListener('keydown',e=>{if(['ArrowDown','PageDown'].includes(e.key)){e.preventDefault();const current=buttons.findIndex(b=>b.getAttribute('aria-current')==='true');document.getElementById(chapters[Math.min(chapters.length-1,current+1)][0])?.scrollIntoView({behavior:reduced.matches?'auto':'smooth'})}if(['ArrowUp','PageUp'].includes(e.key)){e.preventDefault();const current=buttons.findIndex(b=>b.getAttribute('aria-current')==='true');document.getElementById(chapters[Math.max(0,current-1)][0])?.scrollIntoView({behavior:reduced.matches?'auto':'smooth'})}});
+/* O movimento fica nas entradas dos blocos e nos botões do HUD. A rolagem não dispara mais saltos, parallax ou atalhos de teclado. */
 })();
 </script></body></html>
